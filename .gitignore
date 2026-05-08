@@ -1,0 +1,19 @@
+# Build output
+build/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated plots (keep the committed one, ignore future runs)
+# plots/*.png
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Colab checkpoints
+.ipynb_checkpoints/
