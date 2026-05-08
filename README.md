@@ -1,3 +1,4 @@
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://githubtocolab.com/BlissPhinehas/gpu-neural-net-accelerator/blob/main/notebook/gpu_accelerator.ipynb)
 # GPU Neural Network Layer Accelerator
 
 CUDA-accelerated matrix multiplication, ReLU, and Softmax benchmarked against CPU equivalents. Includes a Python ctypes wrapper to call CUDA kernels directly from Python and Matplotlib visualizations of performance gains.
