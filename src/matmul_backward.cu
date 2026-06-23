@@ -103,7 +103,7 @@ void gpu_matmul_backward(float* A, float* B, float* dC,
     // Launch dB kernel — output is K x N
     dim3 blocks_dB((N + TILE_SIZE - 1) / TILE_SIZE,
                    (K + TILE_SIZE - 1) / TILE_SIZE);
-    matmul_backward_dB_kernel<<<blocks_dA, threads>>>(d_A, d_dC, d_dB, M, K, N);
+    matmul_backward_dB_kernel<<<blocks_dB, threads>>>(d_A, d_dC, d_dB, M, K, N);
 
     cudaMemcpy(dA, d_dA, M * K * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(dB, d_dB, K * N * sizeof(float), cudaMemcpyDeviceToHost);
