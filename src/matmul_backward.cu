@@ -37,36 +37,38 @@ __global__ void matmul_backward_dA_kernel(float* B, float* dC, float* dA,
 }
 
 // dB = A^T * dC
+// Straightforward: each thread computes one element of dB
+// dB[k][j] = sum over i of A[i][k] * dC[i][j]
 __global__ void matmul_backward_dB_kernel(float* A, float* dC, float* dB,
                                            int M, int K, int N) {
     __shared__ float tileA[TILE_SIZE][TILE_SIZE];
     __shared__ float tiledC[TILE_SIZE][TILE_SIZE];
 
-    // output dB is K x N
-    // row indexes K, col indexes N
-    int row = blockIdx.y * TILE_SIZE + threadIdx.y;
-    int col = blockIdx.x * TILE_SIZE + threadIdx.x;
+    // This thread computes dB[row][col] where row=k, col=j
+    int row = blockIdx.y * TILE_SIZE + threadIdx.y; // k dimension
+    int col = blockIdx.x * TILE_SIZE + threadIdx.x; // j dimension
 
     float sum = 0.0f;
     int num_tiles = (M + TILE_SIZE - 1) / TILE_SIZE;
 
     for (int t = 0; t < num_tiles; t++) {
-        // Load A^T tile: A is M x K, A^T is K x M
-        // A^T[row][t*TILE+ty] = A[t*TILE+ty][row]
-        int A_row = t * TILE_SIZE + threadIdx.y;
-        tileA[threadIdx.y][threadIdx.x] =
-            (row < K && A_row < M) ? A[A_row * K + row] : 0.0f;
+        // Load A tile: we need A[i][row] = A[t*TILE+threadIdx.x][row]
+        // tileA[ty][tx] = A[t*TILE+ty][row] — column slice of A
+        int i_row = t * TILE_SIZE + threadIdx.y;
+        int i_col = t * TILE_SIZE + threadIdx.x;
 
-        // Load dC tile: dC is M x N
-        // dC[t*TILE+ty][col]
-        int dC_row = t * TILE_SIZE + threadIdx.y;
+        // tileA[tx][ty] = A[t*TILE+tx][row] for dot with dC rows
+        tileA[threadIdx.x][threadIdx.y] =
+            (i_col < M && row < K) ? A[i_col * K + row] : 0.0f;
+
+        // Load dC tile: dC[t*TILE+ty][col]
         tiledC[threadIdx.y][threadIdx.x] =
-            (dC_row < M && col < N) ? dC[dC_row * N + col] : 0.0f;
+            (i_row < M && col < N) ? dC[i_row * N + col] : 0.0f;
 
         __syncthreads();
 
         for (int k = 0; k < TILE_SIZE; k++)
-            sum += tileA[threadIdx.x][k] * tiledC[k][threadIdx.y];
+            sum += tileA[k][threadIdx.y] * tiledC[k][threadIdx.x];
 
         __syncthreads();
     }
