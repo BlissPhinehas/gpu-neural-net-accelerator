@@ -79,6 +79,8 @@ gpu-neural-net-accelerator/
 
 **ctypes bridge** — kernels are compiled into a shared `.so` library and called from Python using `ctypes` with no dependency on PyTorch or PyCUDA.
 
+**Backward pass (backpropagation)** — CUDA kernels for the gradient of each operation. `matmul_backward` computes dA = dC·Bᵀ and dB = Aᵀ·dC using tiled shared memory. `relu_backward` passes gradients where input > 0 and blocks them elsewhere. `softmax_backward` computes the Jacobian-vector product in two parallel passes.
+
 ---
 
 ## Run It Yourself
